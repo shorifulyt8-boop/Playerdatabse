@@ -19,6 +19,8 @@ export interface Team {
   budget: number;
   remaining_budget: number;
   logo_url?: string;
+  login_id?: string;
+  password?: string;
 }
 
 export interface AuctionLog {
