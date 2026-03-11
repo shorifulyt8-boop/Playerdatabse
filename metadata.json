@@ -1,0 +1,5 @@
+{
+  "name": "Cricket Auction Pro",
+  "description": "A real-time cricket tournament auction management system with live bidding, team budget tracking, and squad export.",
+  "requestFramePermissions": []
+}
