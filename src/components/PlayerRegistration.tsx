@@ -30,6 +30,25 @@ export default function PlayerRegistration() {
   const [updateImagePreview, setUpdateImagePreview] = useState<string | null>(null);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const [listSearch, setListSearch] = useState('');
+  const [storageStatus, setStorageStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+
+  useEffect(() => {
+    checkStorage();
+  }, []);
+
+  const checkStorage = async () => {
+    try {
+      const { data, error } = await supabase.storage.getBucket('player-images');
+      if (error) {
+        console.error('Storage check error:', error);
+        setStorageStatus('error');
+      } else {
+        setStorageStatus('ok');
+      }
+    } catch (err) {
+      setStorageStatus('error');
+    }
+  };
 
   useEffect(() => {
     fetchPlayers();
@@ -81,11 +100,13 @@ export default function PlayerRegistration() {
 
         if (uploadError) {
           console.error('Upload error:', uploadError);
+          alert(`Upload failed: ${uploadError.message}. Please ensure you have created a PUBLIC bucket named 'player-images' in Supabase Storage.`);
         } else {
           const { data: { publicUrl } } = supabase.storage
             .from('player-images')
             .getPublicUrl(filePath);
           image_url = publicUrl;
+          console.log('Generated Public URL:', image_url);
         }
       }
 
@@ -212,11 +233,16 @@ export default function PlayerRegistration() {
         .from('player-images')
         .upload(filePath, updateImageFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        alert(`Upload failed: ${uploadError.message}. Make sure the 'player-images' bucket exists and is public.`);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('player-images')
         .getPublicUrl(filePath);
+
+      console.log('Updated Public URL:', publicUrl);
 
       const { error: updateError } = await supabase.from('players')
         .update({ image_url: publicUrl })
@@ -254,6 +280,19 @@ export default function PlayerRegistration() {
               <UserPlus className="text-emerald-500" />
               Single Player Registration
             </h3>
+            
+            {storageStatus === 'error' && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
+                <AlertCircle className="text-red-500 shrink-0" size={20} />
+                <div>
+                  <p className="text-sm font-bold text-red-500">Storage Not Configured</p>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Please create a <b>PUBLIC</b> bucket named <code className="bg-zinc-800 px-1 rounded">player-images</code> in your Supabase Storage to enable photo uploads.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSingleSubmit} className="space-y-4">
               <div className="flex justify-center mb-6">
                 <div className="relative">
@@ -494,7 +533,14 @@ export default function PlayerRegistration() {
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500 font-bold overflow-hidden border border-zinc-700">
                       {player.image_url ? (
-                        <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img 
+                          src={player.image_url} 
+                          alt={player.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
                       ) : (
                         player.name.charAt(0)
                       )}

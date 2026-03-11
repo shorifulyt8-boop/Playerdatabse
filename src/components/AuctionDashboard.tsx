@@ -131,13 +131,20 @@ export default function AuctionDashboard() {
 
           {currentPlayer ? (
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="w-48 h-48 rounded-2xl bg-zinc-800 flex items-center justify-center overflow-hidden border-2 border-zinc-700">
-                {currentPlayer.image_url ? (
-                  <img src={currentPlayer.image_url} alt={currentPlayer.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <User size={80} className="text-zinc-600" />
-                )}
-              </div>
+                <div className="w-48 h-48 rounded-2xl bg-zinc-800 flex items-center justify-center overflow-hidden border-2 border-zinc-700 relative">
+                  {currentPlayer.image_url ? (
+                    <img 
+                      src={currentPlayer.image_url} 
+                      alt={currentPlayer.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=No+Image';
+                      }}
+                    />
+                  ) : (
+                    <User size={80} className="text-zinc-600" />
+                  )}
+                </div>
               <div className="flex-1 space-y-4 text-center md:text-left">
                 <div>
                   <h3 className="text-4xl font-black tracking-tight">{currentPlayer.name}</h3>
