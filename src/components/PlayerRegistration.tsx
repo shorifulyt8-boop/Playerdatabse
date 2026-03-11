@@ -193,6 +193,16 @@ export default function PlayerRegistration() {
     ];
 
     const ws = XLSX.utils.json_to_sheet(templateData);
+    
+    // Set column widths (in characters)
+    ws['!cols'] = [
+      { wch: 30 }, // name
+      { wch: 20 }, // category
+      { wch: 15 }, // base_price
+      { wch: 20 }, // contact_number
+      { wch: 40 }, // role_details
+    ];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Players");
     XLSX.writeFile(wb, "Auction_Player_Template.xlsx");
