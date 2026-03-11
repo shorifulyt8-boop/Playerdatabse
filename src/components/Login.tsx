@@ -64,7 +64,10 @@ export default function Login({ onLogin }: LoginProps) {
           <p className="text-zinc-500 text-sm leading-relaxed">Manage players, start auctions, and finalize bids.</p>
           
           {selectedRole === 'admin' && (
-            <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-top-4">
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="mt-6 space-y-4 animate-in fade-in slide-in-from-top-4"
+            >
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
                 <input 
@@ -90,9 +93,12 @@ export default function Login({ onLogin }: LoginProps) {
         {/* Team Card */}
         <div 
           onClick={() => {
-            setSelectedRole('team');
-            setLoginId('');
-            setPassword('');
+            if (selectedRole !== 'team') {
+              setSelectedRole('team');
+              setLoginId('');
+              setPassword('');
+              setError('');
+            }
           }}
           className={cn(
             "relative group cursor-pointer bg-zinc-900/50 border-2 rounded-3xl p-8 transition-all duration-500 hover:scale-105",
@@ -106,7 +112,10 @@ export default function Login({ onLogin }: LoginProps) {
           <p className="text-zinc-500 text-sm leading-relaxed">View your squad, budget, and auction history.</p>
           
           {selectedRole === 'team' && (
-            <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-top-4">
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="mt-6 space-y-4 animate-in fade-in slide-in-from-top-4"
+            >
               <div className="space-y-3">
                 <div className="relative">
                   <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
