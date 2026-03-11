@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Player, Team } from '../types';
-import { Download, Users, User, ChevronRight } from 'lucide-react';
-import { generateSquadPDF } from '../lib/pdf';
+import { Download, Users, User, ChevronRight, FileText } from 'lucide-react';
+import { generateSquadPDF, generateAllSquadsPDF } from '../lib/pdf';
 import { cn } from '../lib/utils';
 
 export default function TeamView() {
@@ -44,9 +44,19 @@ export default function TeamView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
       {/* Team List */}
-      <div className="lg:col-span-1 space-y-2">
-        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-4 mb-4">Select Team</h3>
-        {teams.map(team => (
+      <div className="lg:col-span-1 space-y-4">
+        <div className="px-4 space-y-4">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Select Team</h3>
+          <button
+            onClick={() => generateAllSquadsPDF(teams, players)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-2xl border border-zinc-700 transition-all text-xs font-bold uppercase tracking-wider"
+          >
+            <FileText size={14} />
+            Export All Squads
+          </button>
+        </div>
+        <div className="space-y-2">
+          {teams.map(team => (
           <button
             key={team.id}
             onClick={() => setSelectedTeamId(team.id)}
@@ -61,6 +71,7 @@ export default function TeamView() {
             <ChevronRight size={16} className={cn("transition-transform", selectedTeamId === team.id && "rotate-90")} />
           </button>
         ))}
+        </div>
       </div>
 
       {/* Squad View */}
@@ -104,7 +115,15 @@ export default function TeamView() {
                     </div>
                     <div className="flex-1">
                       <p className="font-bold text-zinc-200">{player.name}</p>
-                      <p className="text-xs text-zinc-500 uppercase tracking-tighter">{player.category}</p>
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">{player.role_details || player.category}</p>
+                        {player.contact_number && (
+                          <>
+                            <span className="text-[10px] text-zinc-700">•</span>
+                            <p className="text-[10px] text-zinc-500 font-mono">{player.contact_number}</p>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-zinc-500 uppercase font-bold">Sold For</p>

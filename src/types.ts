@@ -10,6 +10,8 @@ export interface Player {
   status: PlayerStatus;
   team_id: string | null;
   image_url?: string;
+  contact_number?: string;
+  role_details?: string;
 }
 
 export interface Team {
