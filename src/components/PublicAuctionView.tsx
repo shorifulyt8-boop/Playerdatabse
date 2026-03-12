@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Player, Team } from '../types';
-import { Trophy, Users, TrendingUp, Timer, User, ShieldCheck, XCircle } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Timer, User, ShieldCheck, XCircle, Star, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
 import { cn } from '../lib/utils';
 
 export default function PublicAuctionView() {
@@ -39,6 +40,26 @@ export default function PublicAuctionView() {
     };
   }, []);
 
+  const triggerConfetti = () => {
+    const duration = 3 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const interval: any = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+  };
+
   const fetchInitialData = async () => {
     await Promise.all([fetchAuctionState(), fetchTeams()]);
   };
@@ -71,6 +92,7 @@ export default function PublicAuctionView() {
       if (team) {
         setLastSold({ player, team });
         setShowStatus('sold');
+        triggerConfetti();
       }
     } else if (player.status === 'unsold') {
       setShowStatus('unsold');
@@ -80,7 +102,7 @@ export default function PublicAuctionView() {
     setTimeout(() => {
       setShowStatus(null);
       fetchAuctionState();
-    }, 4000);
+    }, 6000); // Increased duration for better impact
   };
 
   return (
@@ -151,14 +173,23 @@ export default function PublicAuctionView() {
                 
                 <div className="mb-8 relative inline-block">
                   <div className="w-48 h-48 bg-zinc-800 rounded-[48px] mx-auto flex items-center justify-center text-zinc-600 border-4 border-zinc-800 group-hover:border-emerald-500/20 transition-colors duration-500">
-                    <User size={80} />
+                    {currentPlayer.image_url ? (
+                      <img 
+                        src={currentPlayer.image_url} 
+                        alt={currentPlayer.name} 
+                        className="w-full h-full object-cover rounded-[44px]"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <User size={80} />
+                    )}
                   </div>
                   <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-6 py-1.5 rounded-full text-xs font-black uppercase tracking-tighter italic">
                     Current Player
                   </div>
                 </div>
 
-                <h2 className="text-5xl font-black text-white mb-2 tracking-tighter uppercase italic italic">
+                <h2 className="text-5xl font-black text-white mb-2 tracking-tighter uppercase italic">
                   {currentPlayer.name}
                 </h2>
                 <p className="text-emerald-500 font-bold uppercase tracking-[0.3em] text-sm mb-8">
@@ -187,43 +218,105 @@ export default function PublicAuctionView() {
               </motion.div>
             ) : showStatus === 'sold' && lastSold ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
+                initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-blue-500 rounded-[40px] p-12 text-center text-black relative overflow-hidden shadow-[0_0_100px_rgba(59,130,246,0.5)]"
+                exit={{ opacity: 0, scale: 1.2 }}
+                className="relative min-h-[500px] flex items-center justify-center rounded-[40px] overflow-hidden bg-zinc-950 border border-blue-500/30 shadow-[0_0_100px_rgba(59,130,246,0.2)]"
               >
+                {/* Animated Background Layers */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-purple-600/20" />
                 <motion.div 
-                  animate={{ rotate: [0, -5, 5, -5, 0] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute -top-10 -right-10 opacity-20"
-                >
-                  <Trophy size={200} />
-                </motion.div>
-                
-                <div className="relative z-10">
-                  <ShieldCheck size={80} className="mx-auto mb-6" />
-                  <h2 className="text-8xl font-black uppercase italic tracking-tighter mb-4">SOLD!</h2>
-                  <p className="text-2xl font-bold mb-8 opacity-80">{lastSold.player.name}</p>
-                  
-                  <div className="bg-black/10 rounded-3xl p-8 backdrop-blur-sm inline-block min-w-[300px]">
-                    <p className="text-xs font-black uppercase tracking-widest mb-2 opacity-60">Bought By</p>
-                    <p className="text-4xl font-black uppercase tracking-tighter">{lastSold.team.name}</p>
-                    <p className="text-2xl font-mono mt-4 font-bold">${lastSold.player.sold_price?.toLocaleString()}</p>
-                  </div>
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.5, 0.3]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.2),transparent_70%)]" 
+                />
+
+                <div className="relative z-10 p-12 text-center w-full">
+                  <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="flex justify-center gap-4 mb-6">
+                      <motion.div
+                        animate={{ rotate: [-10, 10, -10] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Star className="text-yellow-500 fill-yellow-500" size={32} />
+                      </motion.div>
+                      <Trophy className="text-blue-500" size={48} />
+                      <motion.div
+                        animate={{ rotate: [10, -10, 10] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Star className="text-yellow-500 fill-yellow-500" size={32} />
+                      </motion.div>
+                    </div>
+
+                    <motion.h2 
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", damping: 10, stiffness: 100, delay: 0.3 }}
+                      className="text-9xl font-black uppercase italic tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-400 leading-none"
+                    >
+                      SOLD
+                    </motion.h2>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                      className="flex flex-col items-center"
+                    >
+                      <p className="text-3xl font-bold text-white mb-8 tracking-tight">{lastSold.player.name}</p>
+                      
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                        <div className="relative bg-zinc-900 rounded-3xl p-8 px-16 border border-white/10">
+                          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3 text-blue-400">Acquired By</p>
+                          <p className="text-5xl font-black uppercase tracking-tighter text-white mb-4">{lastSold.team.name}</p>
+                          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4" />
+                          <p className="text-4xl font-mono font-black text-emerald-400">
+                            ${lastSold.player.sold_price?.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </div>
+
+                {/* Corner Accents */}
+                <div className="absolute top-0 left-0 p-8">
+                  <ShieldCheck className="text-blue-500/30" size={40} />
+                </div>
+                <div className="absolute bottom-0 right-0 p-8">
+                  <Sparkles className="text-blue-500/30" size={40} />
                 </div>
               </motion.div>
             ) : showStatus === 'unsold' ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-zinc-800 rounded-[40px] p-12 text-center text-white relative overflow-hidden"
+                className="bg-zinc-800 rounded-[40px] p-12 text-center text-white relative overflow-hidden min-h-[500px] flex flex-col items-center justify-center"
               >
-                <XCircle size={80} className="mx-auto mb-6 text-zinc-500" />
-                <h2 className="text-8xl font-black uppercase italic tracking-tighter mb-4 text-zinc-500">UNSOLD</h2>
-                <p className="text-2xl font-bold mb-8 text-zinc-400">Player returned to pool</p>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <XCircle size={100} className="mx-auto mb-6 text-zinc-600" />
+                </motion.div>
+                <h2 className="text-8xl font-black uppercase italic tracking-tighter mb-4 text-zinc-600">UNSOLD</h2>
+                <p className="text-2xl font-bold mb-8 text-zinc-500">Player returned to pool</p>
               </motion.div>
             ) : (
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-[40px] p-24 backdrop-blur-xl text-center">
-                <p className="text-zinc-600 font-bold uppercase tracking-widest">Waiting for next player...</p>
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-[40px] p-24 backdrop-blur-xl text-center min-h-[500px] flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 border-4 border-zinc-800 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+                  <p className="text-zinc-600 font-bold uppercase tracking-widest">Waiting for next player...</p>
+                </div>
               </div>
             )}
           </AnimatePresence>
