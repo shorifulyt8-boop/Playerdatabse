@@ -17,7 +17,7 @@ export default function PublicAuctionView() {
 
     const playerSub = supabase
       .channel('public-auction')
-      .on('postgres_changes', { event: 'UPDATE', table: 'players', schema: 'public' }, (payload) => {
+      .on('postgres_changes', { event: '*', table: 'players', schema: 'public' }, (payload) => {
         const updatedPlayer = payload.new as Player;
         
         if (updatedPlayer.status === 'sold' || updatedPlayer.status === 'unsold') {
@@ -168,16 +168,21 @@ export default function PublicAuctionView() {
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
                   <div className="bg-zinc-800/50 rounded-3xl p-6 border border-zinc-700/50">
                     <p className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Base Price</p>
-                    <p className="text-2xl font-black text-white font-mono">
+                    <p className="text-2xl font-black text-zinc-400 font-mono">
                       ${currentPlayer.base_price.toLocaleString()}
                     </p>
                   </div>
-                  <div className="bg-emerald-500/10 rounded-3xl p-6 border border-emerald-500/20">
+                  <motion.div 
+                    key={currentPlayer.current_bid}
+                    initial={{ scale: 1.1, backgroundColor: 'rgba(16, 185, 129, 0.2)' }}
+                    animate={{ scale: 1, backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
+                    className="bg-emerald-500/10 rounded-3xl p-6 border border-emerald-500/20"
+                  >
                     <p className="text-emerald-500 text-[10px] uppercase font-bold mb-1">Current Bid</p>
                     <p className="text-2xl font-black text-emerald-500 font-mono">
-                      ${currentPlayer.base_price.toLocaleString()}
+                      ${(currentPlayer.current_bid || currentPlayer.base_price).toLocaleString()}
                     </p>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             ) : showStatus === 'sold' && lastSold ? (

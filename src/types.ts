@@ -7,6 +7,7 @@ export interface Player {
   category: PlayerCategory;
   base_price: number;
   sold_price: number | null;
+  current_bid: number | null;
   status: PlayerStatus;
   team_id: string | null;
   image_url?: string;

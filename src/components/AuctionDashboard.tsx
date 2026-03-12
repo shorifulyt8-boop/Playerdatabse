@@ -9,6 +9,15 @@ export default function AuctionDashboard() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [customBid, setCustomBid] = useState('');
+  const [updateStatus, setUpdateStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
+
+  useEffect(() => {
+    if (updateStatus) {
+      const timer = setTimeout(() => setUpdateStatus(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [updateStatus]);
 
   useEffect(() => {
     fetchInitialData();
@@ -66,8 +75,9 @@ export default function AuctionDashboard() {
   const handleSold = async (teamId: string) => {
     if (!currentPlayer) return;
     
+    const finalPrice = currentPlayer.current_bid || currentPlayer.base_price;
     const team = teams.find(t => t.id === teamId);
-    if (!team || team.remaining_budget < currentPlayer.base_price) {
+    if (!team || team.remaining_budget < finalPrice) {
       alert("Insufficient budget!");
       return;
     }
@@ -77,14 +87,14 @@ export default function AuctionDashboard() {
       .update({ 
         status: 'sold', 
         team_id: teamId, 
-        sold_price: currentPlayer.base_price 
+        sold_price: finalPrice 
       })
       .eq('id', currentPlayer.id);
 
     const { error: teamError } = await supabase
       .from('teams')
       .update({ 
-        remaining_budget: team.remaining_budget - currentPlayer.base_price 
+        remaining_budget: team.remaining_budget - finalPrice 
       })
       .eq('id', teamId);
 
@@ -95,6 +105,58 @@ export default function AuctionDashboard() {
       if (currentPlayerIndex >= availablePlayers.length - 1) {
         setCurrentPlayerIndex(0);
       }
+    }
+  };
+
+  const handleIncreaseBid = async (amount: number) => {
+    if (!currentPlayer) return;
+    const currentPrice = currentPlayer.current_bid || currentPlayer.base_price;
+    const newBid = currentPrice + amount;
+
+    const { error } = await supabase
+      .from('players')
+      .update({ current_bid: newBid })
+      .eq('id', currentPlayer.id);
+    
+    if (error) {
+      console.error("Error increasing bid:", error);
+      setUpdateStatus({ type: 'error', msg: 'Update failed' });
+    } else {
+      setUpdateStatus({ type: 'success', msg: `Bid increased to $${newBid.toLocaleString()}` });
+    }
+  };
+
+  const handleCustomBid = async () => {
+    if (!currentPlayer || !customBid) return;
+    const newBid = parseInt(customBid);
+    if (isNaN(newBid)) return;
+
+    const { error } = await supabase
+      .from('players')
+      .update({ current_bid: newBid })
+      .eq('id', currentPlayer.id);
+    
+    if (error) {
+      console.error("Error setting custom bid:", error);
+      setUpdateStatus({ type: 'error', msg: 'Update failed' });
+    } else {
+      setUpdateStatus({ type: 'success', msg: `Bid set to $${newBid.toLocaleString()}` });
+      setCustomBid('');
+    }
+  };
+
+  const handleResetBid = async () => {
+    if (!currentPlayer) return;
+    const { error } = await supabase
+      .from('players')
+      .update({ current_bid: currentPlayer.base_price })
+      .eq('id', currentPlayer.id);
+    
+    if (error) {
+      console.error("Error resetting bid:", error);
+      setUpdateStatus({ type: 'error', msg: 'Reset failed' });
+    } else {
+      setUpdateStatus({ type: 'success', msg: 'Bid reset to base price' });
     }
   };
 
@@ -153,17 +215,88 @@ export default function AuctionDashboard() {
                 <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                   <div className="bg-zinc-800/50 px-6 py-3 rounded-2xl border border-zinc-700">
                     <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Base Price</p>
-                    <p className="text-2xl font-mono text-emerald-400">${currentPlayer.base_price.toLocaleString()}</p>
+                    <p className="text-2xl font-mono text-zinc-400">${currentPlayer.base_price.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-emerald-500/10 px-6 py-3 rounded-2xl border border-emerald-500/20">
+                    <p className="text-emerald-500 text-xs uppercase font-bold mb-1">Current Bid</p>
+                    <p className="text-2xl font-mono text-emerald-400 font-black">
+                      ${(currentPlayer.current_bid || currentPlayer.base_price).toLocaleString()}
+                    </p>
                   </div>
                 </div>
-                <div className="pt-4 flex gap-4 justify-center md:justify-start">
+
+                <div className="pt-4 flex flex-wrap gap-3 justify-center md:justify-start items-center">
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleIncreaseBid(50000)}
+                      className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-bold transition-all"
+                    >
+                      +50K
+                    </button>
+                    <button 
+                      onClick={() => handleIncreaseBid(100000)}
+                      className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-bold transition-all"
+                    >
+                      +100K
+                    </button>
+                    <button 
+                      onClick={() => handleIncreaseBid(500000)}
+                      className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-bold transition-all"
+                    >
+                      +500K
+                    </button>
+                  </div>
+
+                  <div className="h-8 w-px bg-zinc-800 mx-2" />
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs font-bold">$</span>
+                      <input 
+                        type="number"
+                        value={customBid}
+                        onChange={(e) => setCustomBid(e.target.value)}
+                        placeholder="Custom Bid"
+                        className="w-36 pl-6 pr-3 py-2 bg-zinc-800 border border-zinc-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-emerald-500 transition-all"
+                      />
+                    </div>
+                    <button 
+                      onClick={handleCustomBid}
+                      className="px-4 py-2 bg-emerald-500 text-black rounded-xl text-xs font-black uppercase italic hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+                    >
+                      Set Bid
+                    </button>
+                  </div>
+
+                  <div className="h-8 w-px bg-zinc-800 mx-2" />
+
+                  <button 
+                    onClick={handleResetBid}
+                    className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs font-bold transition-all"
+                  >
+                    Reset
+                  </button>
+                  
                   <button 
                     onClick={handleUnsold}
-                    className="px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-sm font-bold flex items-center gap-2"
+                    className="px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-xs font-bold transition-all flex items-center gap-2"
                   >
-                    <XCircle size={18} />
-                    Mark Unsold
+                    <XCircle size={14} />
+                    Unsold
                   </button>
+
+                  {updateStatus && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={cn(
+                        "ml-auto px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest",
+                        updateStatus.type === 'success' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                      )}
+                    >
+                      {updateStatus.msg}
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>
