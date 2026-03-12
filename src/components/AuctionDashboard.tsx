@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Player, Team } from '../types';
 import { Trophy, Users, DollarSign, CheckCircle, XCircle, User } from 'lucide-react';
+import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
 export default function AuctionDashboard() {
