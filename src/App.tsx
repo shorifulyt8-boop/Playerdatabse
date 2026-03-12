@@ -61,7 +61,7 @@ export default function App() {
                 <Trophy className="text-black" size={24} />
               </div>
               <h1 className="text-xl font-black tracking-tighter uppercase italic">
-                Auction<span className="text-emerald-500">Pro</span>
+                SA Premier<span className="text-emerald-500"> League 2026</span>
               </h1>
             </div>
             
@@ -162,7 +162,7 @@ export default function App() {
       <footer className="border-t border-zinc-800 py-12 mt-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-zinc-500 text-sm font-medium">
-            © 2026 Cricket Auction Pro. Real-time sports management system.
+            © 2026 SA Premier League. Real-time sports management system.
           </p>
         </div>
       </footer>
